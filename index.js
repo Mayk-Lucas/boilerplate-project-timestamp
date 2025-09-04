@@ -1,32 +1,43 @@
-// index.js
-// where your node app starts
+const express = require('express');
+const app = express();
 
-// init project
-var express = require('express');
-var app = express();
-
-// enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-var cors = require('cors');
-app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
-
-// http://expressjs.com/en/starter/static-files.html
+// Middleware para servir arquivos estáticos e HTML
 app.use(express.static('public'));
 
-// http://expressjs.com/en/starter/basic-routing.html
-app.get("/", function (req, res) {
+// Rota inicial
+app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+// Lógica principal do microserviço de timestamp
+app.get('/api/:date?', (req, res) => {
+  const dateParam = req.params.date;
+  let date;
 
-// your first API endpoint... 
-app.get("/api/hello", function (req, res) {
-  res.json({greeting: 'hello API'});
+  // Se o parâmetro de data estiver vazio, use a data e hora atuais
+  if (!dateParam) {
+    date = new Date();
+  } else {
+    if (!isNaN(dateParam)) {
+      date = new Date(parseInt(dateParam));
+    } else {
+      date = new Date(dateParam);
+    }
+  }
+
+  // Verifique se a data é válida
+  if (date.toString() === 'Invalid Date') {
+    res.json({ error: 'Invalid Date' });
+  } else {
+    // Retorne o objeto JSON com unix e utc
+    res.json({
+      unix: date.getTime(),
+      utc: date.toUTCString(),
+    });
+  }
 });
 
-
-
-// Listen on port set in environment variable or default to 3000
-var listener = app.listen(process.env.PORT || 3000, function () {
-  console.log('Your app is listening on port ' + listener.address().port);
+// Defina a porta do servidor
+const listener = app.listen(process.env.PORT || 3000, () => {
+  console.log('Seu aplicativo está ouvindo na porta ' + listener.address().port);
 });
